@@ -2,14 +2,17 @@
 <html lang="de">
 	<head>
 		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width">
 		<title>Yoshi zeichnet Straßen</title>
 		<link rel="stylesheet" href="yoshi.css">
 	</head>
 	<body>
 		<h1>Yoshi zeichnet Straßen</h1>
-		<textarea id="source"></textarea>
-		<svg id="output" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20" height="20"></svg>
-		<script src="yoshi.js"></script>
+		<div class="row">
+			<div id="source-border"><textarea id="source"></textarea></div>
+			<svg id="output" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="-11 -11 22 22"></svg>
+		</div>
 		<button id="run">Start</button>
+		<script src="yoshi.js"></script>
 	</body>
 </html>            

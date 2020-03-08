@@ -1,0 +1,74 @@
+html {
+	padding: 0;
+	margin: 0;
+	width: 100%;
+	height: 100%;
+}
+html[data-theme='light'] {
+	background-color: #eee8d5;
+	color: #839496;
+}
+html[data-theme='dark'] {
+	background-color: #073642;
+	color: #657b83;
+}
+body {
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+}
+h1 {
+	margin: 0;
+	padding: 0 10px;
+}
+.row {
+	margin: 0;
+	padding: 0;
+	flex-grow: 1;
+	display: flex;
+	flex-direction: row;
+}
+#source-border {
+	width: 188px;
+	padding: 4px;
+	vertical-align: top;
+	flex-grow: 1;
+}
+textarea {
+	margin: 0;
+	padding: 4px;
+	height: calc(100% - 8px);
+	width: calc(100% - 8px);
+}
+html[data-theme='light'] textarea {
+	color: #839496;
+	border-color: #839496;
+	background-color: #fdf6e3;
+}
+html[data-theme='dark'] textarea {
+	color: #657b83;
+	border-color: #657b83;
+	background-color: #002b36;
+}
+svg {
+	width: 100px;
+	margin: 0;
+	vertical-align: top;
+	flex-grow: 1;
+	margin: 4px 4px auto 4px;
+}
+svg line {
+	stroke: black;
+}
+html[data-theme='light'] svg line {
+	stroke: #93a1a1;
+}
+html[data-theme='dark'] svg line {
+	stroke: #93a1a1;
+}
+button {
+	margin: 4px 4px 4px auto;
+}

@@ -1,6 +1,14 @@
 'use strict';
 
 window.addEventListener('load', () => {
+	const query = window.location.search.substring(1);
+	console.log(query);
+	const $html = document.getElementsByTagName('HTML')[0];
+	if (query === 'theme=dark') {
+		$html.setAttribute('data-theme', 'dark');
+	} else if (query === 'theme=light') {
+		$html.setAttribute('data-theme', 'light');
+	}
 	const $source = document.getElementById('source');
 	$source.value = "(markiere 10)\n(drehe 120)\n(markiere 10)\n(drehe 120)\n(markiere 10)\n(drehe 120)";
 
@@ -15,8 +23,8 @@ window.addEventListener('load', () => {
 
 	const run = src => {
 		clear_output();
-		let x = 10;
-		let y = 10;
+		let x = 0;
+		let y = 0;
 		let angle = 0;
 		const end = src.length;
 		let i = 0;
@@ -42,7 +50,6 @@ window.addEventListener('load', () => {
 					y = y - 10 * Math.cos(angle);
 					line.setAttribute('x2', '' + x);
 					line.setAttribute('y2', '' + y);
-					line.setAttribute("stroke", "black")
 					$output.append(line);
 					continue;
 				}
