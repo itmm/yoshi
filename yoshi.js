@@ -16,6 +16,17 @@ window.addEventListener('load', () => {
 		"(markiere 10)\n" +
 		"(drehe 120)";
 
+	$source.addEventListener('keydown', evt => {
+        if (evt.keyCode === 9) { // tab was pressed
+            const val = $source.value;
+			const start = $source.selectionStart;
+			const end = $source.selectionEnd;
+            $source.value = val.substring(0, start) + '\t' + val.substring(end);
+            $source.selectionStart = $source.selectionEnd = start + 1;
+			evt.preventDefault();
+        }
+    });
+
 	const $output = document.getElementById('output');
 	const svg_ns = "http://www.w3.org/2000/svg";
 
