@@ -9,11 +9,11 @@ window.addEventListener('load', () => {
 		$html.setAttribute('data-theme', 'light');
 	}
 	const $source = document.getElementById('source');
-	$source.value = "(markiere 10)\n" +
+	$source.value = "(markiere 20)\n" +
 		"(drehe 120)\n" + 
-		"(markiere 10)\n" + 
+		"(markiere 20)\n" + 
 		"(drehe 120)\n" +
-		"(markiere 10)\n" +
+		"(markiere 20)\n" +
 		"(drehe 120)";
 
 	$source.addEventListener('keydown', evt => {

@@ -1,4 +1,4 @@
-html, body {
+html {
 	padding: 0;
 	margin: 0;
 	width: 100%;
@@ -14,6 +14,10 @@ html[data-theme='dark'] {
 	color: #657b83;
 }
 body {
+	margin: 0;
+	padding: 0;
+	width: calc(100% - 2px);
+	height: calc(100% - 2px);
 	display: flex;
 	flex-direction: column;
 	border: #f0f0f0 solid 1px;
