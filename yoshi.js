@@ -30,12 +30,121 @@ window.addEventListener('load', () => {
 	const $output = document.getElementById('output');
 	const svg_ns = "http://www.w3.org/2000/svg";
 
+	const check_length = (lst, len) => {
+		if (lst.length !== len) {
+			throw `Liste ${lst} hat falsche Länge (${lst.length} anstatt ${len}`;
+		}
+	};
+	const to_num = val => {
+		const res = +do_eval(val);
+		if (isNaN(res)) {
+			throw `Zahl erwartet anstatt "${val}"`;
+		}
+		return res;
+	};
+
+	let top_frame = {
+		'markiere': cmd => {
+			check_length(cmd, 2);
+			const len = to_num(cmd[1]);
+			const line = document.createElementNS(svg_ns, 'line');
+			line.setAttribute('x1', '' + x);
+			line.setAttribute('y1', '' + y);
+			x = x + len * Math.sin(angle);
+			y = y - len * Math.cos(angle);
+			line.setAttribute('x2', '' + x);
+			line.setAttribute('y2', '' + y);
+			$output.append(line);
+		},
+		'drehe': cmd => {
+			check_length(cmd, 2);
+			const val = to_num(cmd[1]);
+			angle += val * Math.PI / 180;
+		},
+		'+': cmd => {
+			let val = 0;
+			for (let i = 1; i < cmd.length; ++i) {
+				val += to_num(cmd[i]);
+			}
+			return val;
+		},
+		'-': cmd => {
+			let val = 0;
+			if (cmd.length == 2) {
+				val = -to_num(cmd[1]);
+			} else if (cmd.length > 2) {
+				val = to_num(cmd[1]);
+				for (let i = 2; i < cmd.length; ++i) {
+					val -= to_num(cmd[i]);
+				}
+			}
+			return val;
+		},
+		'*': cmd => {
+			let val = 1;
+			for (let i = 1; i < cmd.length; ++i) {
+				val *= to_num(cmd[i]);
+			}
+			return val;
+		},
+		'/': cmd => {
+			let val = 1;
+			if (cmd.length == 2) {
+				val /= to_num(cmd[1]);
+			} else if (cmd.length > 2) {
+				val = to_num(cmd[1]);
+				for (let i = 2; i < cmd.length; ++i) {
+					val /= to_num(cmd[i]);
+				}
+				return val;
+			}
+		},
+		'wiederhole': cmd => {
+			if (cmd.length > 1) {
+				let count = to_num(cmd[1]);
+				for (; count > 0; count -= 1) {
+					for (let i = 2; i < cmd.length; ++i) {
+						do_eval(cmd[i]);
+					}
+				}
+			}
+		},
+		'defn': cmd => {
+			if (cmd.length > 2) {
+				const refs = cmd[2];
+				frames[frames.length - 1][cmd[1]] = args => {
+					let frame = {};
+					frames.push(frame);
+					refs.forEach((n, i) => {
+						frame[n] = args[i + 1];
+					});
+					for (let i = 3; i < cmd.length; ++i) {
+						do_eval(cmd[i]);
+					}
+					frames.pop();
+				};
+			}
+		}
+	};
+	let frames = [top_frame, {}];
+
+	const get = name => {
+		for (let i = frames.length - 1; i >= 0; --i) {
+			const f = frames[i];
+			if (name in f) {
+				return f[name];
+			}
+		}
+		return undefined;
+	};
+
 	let x = 0;
 	let y = 0;
 	let angle = 0;
 
 	const clear_output = () => {
 		x = y = angle = 0;
+		frames = [top_frame, {}];
 		while ($output.firstChild) {
 			$output.removeChild($output.firstChild);
 		}
@@ -77,82 +186,17 @@ window.addEventListener('load', () => {
 		}
 		return root;
 	};
-	const check_length = (lst, len) => {
-		if (lst.length !== len) {
-			throw `Liste ${lst} hat falsche Länge (${lst.length} anstatt ${len}`;
-		}
-	};
-	const to_num = val => {
-		const res = +do_eval(val);
-		if (isNaN(res)) {
-			throw `Zahl erwartet anstatt "${val}"`;
-		}
-		return res;
-	};
 	const do_eval = cmd => {
 		if (! cmd.forEach) {
-			return cmd;
+			const val = get(cmd);
+			return typeof(val) !== "undefined" ? val : cmd;
 		}
 		if (cmd.length === 0) {
 			throw "kann leere Liste nicht ausführen";
-		} else if (cmd[0] == 'markiere') {
-			check_length(cmd, 2);
-			const len = to_num(cmd[1]);
-			const line = document.createElementNS(svg_ns,'line');
-			line.setAttribute('x1', '' + x);
-			line.setAttribute('y1', '' + y);
-			x = x + len * Math.sin(angle);
-			y = y - len * Math.cos(angle);
-			line.setAttribute('x2', '' + x);
-			line.setAttribute('y2', '' + y);
-			$output.append(line);
-		} else if (cmd[0] == 'drehe') {
-			check_length(cmd, 2);
-			const val = to_num(cmd[1]);
-			angle += val * Math.PI / 180;
-		} else if (cmd[0] == '+') {
-			let val = 0;
-			for (let i = 1; i < cmd.length; ++i) {
-				val += to_num(cmd[i]);
-			}
-			return val;
-		} else if (cmd[0] == '-') {
-			let val = 0;
-			if (cmd.length == 2) {
-				val = -to_num(cmd[1]);
-			} else if (cmd.length > 2) {
-				val = to_num(cmd[1]);
-				for (let i = 2; i < cmd.length; ++i) {
-					val -= to_num(cmd[i]);
-				}
-			}
-			return val;
-		} else if (cmd[0] == '*') {
-			let val = 1;
-			for (let i = 1; i < cmd.length; ++i) {
-				val *= to_num(cmd[i]);
-			}
-			return val;
-		} else if (cmd[0] == '/') {
-			let val = 1;
-			if (cmd.length == 2) {
-				val /= to_num(cmd[1]);
-			} else if (cmd.length > 2) {
-				val = to_num(cmd[1]);
-				for (let i = 2; i < cmd.length; ++i) {
-					val /= to_num(cmd[i]);
-				}
-				return val;
-			}
-		} else if (cmd[0] == 'wiederhole') {
-			if (cmd.length > 1) {
-				let count = to_num(cmd[1]);
-				for (; count > 0; count -= 1) {
-					for (let i = 2; i < cmd.length; ++i) {
-						do_eval(cmd[i]);
-					}
-				}
-			}
+		}
+		const f = get(cmd[0]);
+		if (typeof f === 'function') {
+			return f(cmd);
 		} else {
 			throw `unbekanntes Kommando ${cmd[0]}`;
 		}
