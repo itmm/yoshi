@@ -217,6 +217,12 @@ window.addEventListener('load', () => {
 		},
 		'>': cmd => {
 			return to_num(car(cmd)) > to_num(car(cdr(cmd)));
+		},
+		'<': cmd => {
+			return to_num(car(cmd)) < to_num(car(cdr(cmd)));
+		},
+		'nicht': cmd => {
+			return ! do_eval(car(cmd));
 		}
 	};
 	let frames = [top_frame, {}];
