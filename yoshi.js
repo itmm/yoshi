@@ -205,6 +205,18 @@ window.addEventListener('load', () => {
 			} else {
 				return do_eval(car(cdr(cdr(cmd))));
 			}
+		},
+		'abs': cmd => {
+			return Math.abs(to_num(car(cmd)));
+		},
+		'x-koord': cmd => {
+			return x;
+		},
+		'y-koord': cmd => {
+			return y;
+		},
+		'>': cmd => {
+			return to_num(car(cmd)) > to_num(car(cdr(cmd)));
 		}
 	};
 	let frames = [top_frame, {}];
