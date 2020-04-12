@@ -200,7 +200,7 @@ window.addEventListener('load', () => {
 		if (cmd.length === 0) {
 			throw "kann leere Liste nicht ausführen";
 		}
-		const f = get(cmd[0]);
+		const f = do_eval(cmd[0]);
 		if (typeof f === 'function') {
 			return f(cmd);
 		} else {
