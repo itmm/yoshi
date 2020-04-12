@@ -30,11 +30,6 @@ window.addEventListener('load', () => {
 	const $output = document.getElementById('output');
 	const svg_ns = "http://www.w3.org/2000/svg";
 
-	const check_length = (lst, len) => {
-		if (lst.length !== len) {
-			throw `Liste ${lst} hat falsche Länge (${lst.length} anstatt ${len}`;
-		}
-	};
 	const to_num = val => {
 		const res = +do_eval(val);
 		if (isNaN(res)) {
@@ -43,10 +38,37 @@ window.addEventListener('load', () => {
 		return res;
 	};
 
+	const cons = (car, cdr) => {
+		return {
+			'car': car,
+			'cdr': cdr
+		};
+	};
+	const car = lst => {
+		return typeof lst == 'object' ? lst.car : undefined;
+	}
+	const cdr = lst => {
+		return typeof lst == 'object' ? lst.cdr : undefined;
+	}
+
+	const format_lst = lst => {
+		if (typeof lst == 'undefined') { return '()'; }
+		if (typeof lst == 'object') {
+			let result = '(';
+			for (let i = lst; i; i = cdr(i)) {
+				if (i !== lst) { result += ' '; }
+				result += format_lst(car(i));
+			}
+			result += ')';
+			return result;
+		}
+		return lst;
+	};
 	let top_frame = {
 		'markiere': cmd => {
-			check_length(cmd, 2);
-			const len = to_num(cmd[1]);
+			const len = to_num(car(cmd));
+			if (isNaN(len)) { throw 'markiere: erwarte Zahl'; }
+			if (cdr(cmd)) { throw 'markiere: zu viele Argumente'; }
 			const line = document.createElementNS(svg_ns, 'line');
 			line.setAttribute('x1', '' + x);
 			line.setAttribute('y1', '' + y);
@@ -57,79 +79,94 @@ window.addEventListener('load', () => {
 			$output.append(line);
 		},
 		'drehe': cmd => {
-			check_length(cmd, 2);
-			const val = to_num(cmd[1]);
+			const val = to_num(car(cmd));
+			if (isNaN(val)) { throw 'drehe: erwarte Zahl'; }
+			if (cdr(cmd)) { throw 'drehe: zu viele Argumente'; }
 			angle += val * Math.PI / 180;
 		},
 		'+': cmd => {
 			let val = 0;
-			for (let i = 1; i < cmd.length; ++i) {
-				val += to_num(cmd[i]);
+			for (; cmd; cmd = cdr(cmd)) {
+				val += to_num(car(cmd));
 			}
 			return val;
 		},
 		'-': cmd => {
 			let val = 0;
-			if (cmd.length == 2) {
-				val = -to_num(cmd[1]);
-			} else if (cmd.length > 2) {
-				val = to_num(cmd[1]);
-				for (let i = 2; i < cmd.length; ++i) {
-					val -= to_num(cmd[i]);
+			if (cmd) {
+				if (! cdr(cmd)) {
+					val = -to_num(car(cmd));
+				} else {
+					val = to_num(car(cmd));
+					for (cmd = cdr(cmd); cmd; cmd = cdr(cmd)) {
+						val -= to_num(car(cmd));
+					}
 				}
 			}
 			return val;
 		},
 		'*': cmd => {
 			let val = 1;
-			for (let i = 1; i < cmd.length; ++i) {
-				val *= to_num(cmd[i]);
+			for (; cmd; cmd = cdr(cmd)) {
+				val *= to_num(car(cmd));
 			}
 			return val;
 		},
 		'/': cmd => {
 			let val = 1;
-			if (cmd.length == 2) {
-				val /= to_num(cmd[1]);
-			} else if (cmd.length > 2) {
-				val = to_num(cmd[1]);
-				for (let i = 2; i < cmd.length; ++i) {
-					val /= to_num(cmd[i]);
+			if (cmd) {
+				if (! cdr(cmd)) {
+					val /= to_num(car(cmd));
+				} else {
+					val = to_num(car(cmd));
+					for (cmd = cdr(cmd); cmd; cmd = cdr(cmd)) {
+						val /= to_num(car(cmd));
+					}
 				}
-				return val;
 			}
+			return val;
 		},
 		'wiederhole': cmd => {
-			if (cmd.length > 1) {
-				let count = to_num(cmd[1]);
-				for (; count > 0; count -= 1) {
-					for (let i = 2; i < cmd.length; ++i) {
-						do_eval(cmd[i]);
-					}
+			let count = to_num(car(cmd));
+			let result = undefined;
+			for (; count > 0; count -= 1) {
+				for (let cm = cdr(cmd); cm; cm = cdr(cm)) {
+					result = do_eval(car(cm));
 				}
 			}
+			return result;
 		},
 		'def-fn': cmd => {
-			if (cmd.length > 2) {
-				const refs = cmd[2];
-				let ref_frames = frames.slice();
-				frames[frames.length - 1][cmd[1]] = args => {
-					let frame = {};
-					refs.forEach((n, i) => {
-						frame[n] = do_eval(args[i + 1]);
-					});
-					const old_frames = frames;
-					frames = ref_frames;
-					frames.push(frame);
-					let result;
-					for (let i = 3; i < cmd.length; ++i) {
-						result = do_eval(cmd[i]);
-					}
-					frames.pop();
-					frames = old_frames;
-					return result;
-				};
+			const name = car(cmd);
+			if (typeof name != 'string') {
+				throw "def-fn: Name erwartet";
 			}
+			cmd = cdr(cmd);
+			const refs = car(cmd);
+			if (typeof refs != 'object' && typeof refs != 'undefined') {
+				throw "def-fn: Argument-Liste erwartet";
+			}
+			cmd = cdr(cmd);
+			const ref_frames = frames.slice();
+			const fn = args => {
+				let frame = {};
+				for (let rl = refs; rl; rl = cdr(rl)) {
+					frame[car(rl)] = do_eval(car(args));
+					args = cdr(args);
+				}
+				const old_frames = frames;
+				frames = ref_frames;
+				frames.push(frame);
+				let result = undefined;
+				for (let cm = cmd; cm; cm = cdr(cm)) {
+					result = do_eval(car(cm));
+				}
+				frames.pop();
+				frames = old_frames;
+				return result;
+			};
+			frames[frames.length - 1][name] = fn;
+			return fn;
 		}
 	};
 	let frames = [top_frame, {}];
@@ -166,16 +203,21 @@ window.addEventListener('load', () => {
 			if (c <= ' ') { ++i; continue; }
 			if (c === '(') {
 				let nw = [];
-				cur.push(nw);
 				stack.push(cur);
 				cur = nw;
 				++i; continue;
 			}
 			if (c === ')') {
+				const lst = cur;
 				cur = stack.pop();
 				if (! cur) {
 					throw "zu viele ')'";
 				}
+				let cr = undefined;
+				for (let i = lst.length - 1; i >= 0; --i) {
+					cr = cons(lst[i], cr);
+				}
+				cur.push(cr);
 				++i; continue;
 			}
 			let tok = '';
@@ -190,28 +232,29 @@ window.addEventListener('load', () => {
 		if (cur != root) {
 			throw "nicht alle Listen geschlossen";
 		}
-		return root;
+		let cr = undefined;
+		for (let i = root.length - 1; i >= 0; --i) {
+			cr = cons(root[i], cr);
+		}
+		return cr;
 	};
 	const do_eval = cmd => {
-		if (! cmd.forEach) {
+		if (typeof cmd != 'object') {
 			const val = get(cmd);
-			return typeof(val) !== "undefined" ? val : cmd;
+			return typeof(val) !== 'undefined' ? val: cmd;
 		}
-		if (cmd.length === 0) {
-			throw "kann leere Liste nicht ausführen";
-		}
-		const f = do_eval(cmd[0]);
+		const f = do_eval(car(cmd));
 		if (typeof f === 'function') {
-			return f(cmd);
+			return f(cdr(cmd));
 		} else {
 			throw `unbekanntes Kommando ${cmd[0]}`;
 		}
 	};
 	const run = src => {
 		clear_output();
-		parse(src).forEach(cmd => {
-			do_eval(cmd);
-		});
+		for (let lst = parse(src); lst; lst = cdr(lst)) {
+			do_eval(car(lst));
+		}
 	};
 
 	document.getElementById('run').addEventListener('click', evt => {
