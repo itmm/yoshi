@@ -109,19 +109,25 @@ window.addEventListener('load', () => {
 				}
 			}
 		},
-		'defn': cmd => {
+		'def-fn': cmd => {
 			if (cmd.length > 2) {
 				const refs = cmd[2];
+				let ref_frames = frames.slice();
 				frames[frames.length - 1][cmd[1]] = args => {
 					let frame = {};
-					frames.push(frame);
 					refs.forEach((n, i) => {
-						frame[n] = args[i + 1];
+						frame[n] = do_eval(args[i + 1]);
 					});
+					const old_frames = frames;
+					frames = ref_frames;
+					frames.push(frame);
+					let result;
 					for (let i = 3; i < cmd.length; ++i) {
-						do_eval(cmd[i]);
+						result = do_eval(cmd[i]);
 					}
 					frames.pop();
+					frames = old_frames;
+					return result;
 				};
 			}
 		}
