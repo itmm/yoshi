@@ -39,10 +39,14 @@ window.addEventListener('load', () => {
 	};
 
 	const cons = (car, cdr) => {
-		return {
-			'car': car,
-			'cdr': cdr
-		};
+		if (typeof car == 'undefined' && typeof cdr == 'undefined') {
+			return undefined;
+		} else {
+			return {
+				'car': car,
+				'cdr': cdr
+			};
+		}
 	};
 	const car = lst => {
 		return typeof lst == 'object' ? lst.car : undefined;
@@ -167,6 +171,40 @@ window.addEventListener('load', () => {
 			};
 			frames[frames.length - 1][name] = fn;
 			return fn;
+		},
+		'car': cmd => {
+			if (! cmd) { throw "car: zu wenig Argumente"; }
+			if (cdr(cmd)) { throw "car: zu viele Argumente"; }
+			return car(do_eval(car(cmd)));
+		},
+		'cdr': cmd => {
+			if (! cmd) { throw "car: zu wenig Argumente"; }
+			if (cdr(cmd)) { throw "car: zu viele Argumente"; }
+			return cdr(do_eval(car(cmd)));
+		},
+		'nil': undefined,
+		'cons': cmd => {
+			if (cdr(cdr(cmd))) {
+				throw "cons: zu viele Argumente";
+			}
+			return cons(do_eval(car(cmd)), do_eval(car(cdr(cmd))));
+		},
+		'ist-nil?': cmd => {
+			if (! cmd) {
+				throw "ist-nil?: zu wenig Argumente";
+			}
+			if (cdr(cmd)) {
+				throw "ist-nil?: zu viele Argumente";
+			}
+			console.log(do_eval(car(cmd)));
+			return typeof do_eval(car(cmd)) === 'undefined';
+		},
+		'wenn': cmd => {
+			if (do_eval(car(cmd))) {
+				return do_eval(car(cdr(cmd)));
+			} else {
+				return do_eval(car(cdr(cdr(cmd))));
+			}
 		}
 	};
 	let frames = [top_frame, {}];
@@ -227,7 +265,11 @@ window.addEventListener('load', () => {
 				if (i >= end) { break; }
 				c = src.charAt(i);
 			}
-			cur.push(tok);
+			if (! isNaN(+tok)) {
+				cur.push(+tok);
+			} else {
+				cur.push(tok);
+			}
 		}
 		if (cur != root) {
 			throw "nicht alle Listen geschlossen";
@@ -239,9 +281,11 @@ window.addEventListener('load', () => {
 		return cr;
 	};
 	const do_eval = cmd => {
+		if (typeof cmd == 'string') {
+			return get(cmd);
+		}
 		if (typeof cmd != 'object') {
-			const val = get(cmd);
-			return typeof(val) !== 'undefined' ? val: cmd;
+			return cmd;
 		}
 		const f = do_eval(car(cmd));
 		if (typeof f === 'function') {
@@ -273,27 +317,25 @@ window.addEventListener('load', () => {
 	};
 
 	const eq_lists = (a, b) => {
-		if (! a.forEach) {
-			assert(! b.forEach, 'only one list');
+		if (typeof a !== 'object') {
+			assert(typeof b !== 'object', 'only one list');
 			assert(a == b, 'different values');
 		} else {
-			assert(a.length == b.length, `different length ${a.length}, ${b.length}`);
-			a.forEach((v, i) => {
-				eq_lists(v, b[i]);
-			});
+			eq_lists(car(a), car(b));
+			eq_lists(cdr(a), cdr(b));
 		}
 	};
 	const test_parse = (src, exp) => {
 		eq_lists(exp, parse(src));
 	};
 	const test_eval = (src, exp) => {
-		assert(do_eval(parse(src)[0]) === exp, src);
+		assert(do_eval(car(parse(src))) == exp, src);
 	};
 
 	if (query.indexOf('unit-tests=true') >= 0) {
 		try {
 			run("");
-			test_parse("(a b c)", [['a', 'b', 'c']]);
+			test_parse("(a b c)", cons(cons('a', cons('b', cons('c')))));
 			test_eval("(+ 1 2 3)", 6);
 			test_eval("(+ 2)", 2);
 			test_eval("(+)", 0);
@@ -302,6 +344,8 @@ window.addEventListener('load', () => {
 			test_eval("(- 4 1)", 3);
 			test_eval("(* 2 3)", 6);
 			test_eval("(/ 12 3)", 4);
+			test_eval("(car (cons 1 (cons 2)))", 1);
+			test_eval("(car (cdr (cons 1 (cons 2))))", 2);
 			clear_output();
 			
 			console.log("did run unit-tests");
