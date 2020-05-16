@@ -31,7 +31,12 @@ window.addEventListener('load', () => {
 	const svg_ns = "http://www.w3.org/2000/svg";
 
 	const to_num = val => {
-		const res = +do_eval(val);
+		const evaled = do_eval(val);
+		if (typeof evaled === 'number') {
+			return evaled;
+		}
+		const masked = evaled.replace(/\./g, '').replace(',', '.');
+		const res = +masked;
 		if (isNaN(res)) {
 			throw `Zahl erwartet anstatt "${val}"`;
 		}
@@ -300,7 +305,8 @@ window.addEventListener('load', () => {
 	};
 	const do_eval = cmd => {
 		if (typeof cmd == 'string') {
-			return get(cmd);
+			const got = get(cmd);
+			return got ? got : cmd;
 		}
 		if (typeof cmd != 'object') {
 			return cmd;
@@ -362,6 +368,8 @@ window.addEventListener('load', () => {
 			test_eval("(- 4 1)", 3);
 			test_eval("(* 2 3)", 6);
 			test_eval("(/ 12 3)", 4);
+			test_eval("(+ 2,2 3,3)", 5.5);
+			test_eval("(+ 1.000.000)", 1000000);
 			test_eval("(car (cons 1 (cons 2)))", 1);
 			test_eval("(car (cdr (cons 1 (cons 2))))", 2);
 			clear_output();
