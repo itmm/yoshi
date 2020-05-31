@@ -271,6 +271,17 @@ window.addEventListener('load', () => {
 		while (i < end) {
 			let c = src.charAt(i);
 			if (c <= ' ') { ++i; continue; }
+			if (c === ';') {
+				++i;
+				if (i < end && src.charAt(i) === ';') {
+					while (i < end && src.charAt(i) !== '\r' &&
+						src.charAt(i) !== '\n'
+					) {
+						++i;
+					}
+				}
+				continue;
+			}
 			if (c === '(') {
 				let nw = [];
 				stack.push(cur);
