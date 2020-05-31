@@ -211,10 +211,10 @@ window.addEventListener('load', () => {
 			for (; cmd; cmd = cdr(cmd)) {
 				let expr = car(cmd);
 				if (do_eval(car(expr))) {
-					expr = cdr(cmd);
+					let cmds = cdr(expr);
 					let result;
-					for (; expr; expr = cdr(expr)) {
-						result = do_eval(car(expr));
+					for (; cmds; cmds = cdr(cmds)) {
+						result = do_eval(car(cmds));
 					}
 					return result;
 				}
