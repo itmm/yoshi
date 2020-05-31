@@ -145,15 +145,18 @@ window.addEventListener('load', () => {
 			}
 			return result;
 		},
-		'def-fn': cmd => {
-			const name = car(cmd);
-			if (typeof name != 'string') {
-				throw "def-fn: Name erwartet";
+		'def': cmd => {
+			const sig = car(cmd);
+			if (typeof sig !== 'object' && typeof sig !== 'undefined') {
+				throw "def: Signatur erwartet";
 			}
-			cmd = cdr(cmd);
-			const refs = car(cmd);
-			if (typeof refs != 'object' && typeof refs != 'undefined') {
-				throw "def-fn: Argument-Liste erwartet";
+			const name = car(sig);
+			if (typeof name !== 'string') {
+				throw "def: Name erwartet";
+			}
+			const refs = cdr(sig);
+			if (typeof refs !== 'object' && typeof refs !== 'undefined') {
+				throw "def: Argument-Liste erwartet";
 			}
 			cmd = cdr(cmd);
 			const ref_frames = frames.slice();
@@ -204,11 +207,17 @@ window.addEventListener('load', () => {
 			console.log(do_eval(car(cmd)));
 			return typeof do_eval(car(cmd)) === 'undefined';
 		},
-		'wenn': cmd => {
-			if (do_eval(car(cmd))) {
-				return do_eval(car(cdr(cmd)));
-			} else {
-				return do_eval(car(cdr(cdr(cmd))));
+		'falls': cmd => {
+			for (; cmd; cmd = cdr(cmd)) {
+				let expr = car(cmd);
+				if (do_eval(car(expr))) {
+					expr = cdr(cmd);
+					let result;
+					for (; expr; expr = cdr(expr)) {
+						result = do_eval(car(expr));
+					}
+					return result;
+				}
 			}
 		},
 		'abs': cmd => {
